@@ -6,47 +6,47 @@
   <title>My Appointments</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 min-h-screen text-gray-900">
+<body class="bg-gray-900 text-gray-100 min-h-screen">
 
   <div class="max-w-4xl mx-auto p-6">
     <header class="flex flex-wrap items-center justify-between mb-6 gap-3">
-      <h1 class="text-3xl font-semibold text-red-700">My Appointments</h1>
+      <h1 class="text-3xl font-semibold text-red-400 drop-shadow">My Appointments</h1>
       <div class="flex gap-2 flex-wrap">
-        <button id="addBtn" class="px-4 py-2 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition">
+        <button id="addBtn" class="px-4 py-2 bg-red-600 text-white rounded-xl shadow hover:bg-red-700 transition">
           + Add
         </button>
         <button id="exportBtn" class="px-4 py-2 bg-green-600 text-white rounded-xl shadow hover:bg-green-700 transition">
           Export
         </button>
-        <label class="px-4 py-2 bg-gray-200 rounded-xl shadow hover:bg-gray-300 transition cursor-pointer">
+        <label class="px-4 py-2 bg-gray-800 rounded-xl shadow hover:bg-gray-700 transition cursor-pointer">
           Import
           <input type="file" id="importInput" class="hidden" accept=".json" />
         </label>
       </div>
     </header>
 
-    <div id="formContainer" class="hidden mb-6 p-4 bg-white rounded-2xl shadow">
+    <div id="formContainer" class="hidden mb-6 p-4 bg-gray-800 rounded-2xl shadow-lg">
       <form id="appointmentForm" class="grid md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-600">Name</label>
-          <input type="text" id="name" class="mt-1 w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+          <label class="block text-sm font-medium text-gray-400">Name</label>
+          <input type="text" id="name" class="mt-1 w-full border border-gray-700 bg-gray-900 text-gray-100 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 outline-none">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-600">Title</label>
-          <input type="text" id="title" class="mt-1 w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+          <label class="block text-sm font-medium text-gray-400">Title</label>
+          <input type="text" id="title" class="mt-1 w-full border border-gray-700 bg-gray-900 text-gray-100 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 outline-none">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-600">Date</label>
-          <input type="date" id="date" class="mt-1 w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+          <label class="block text-sm font-medium text-gray-400">Date</label>
+          <input type="date" id="date" class="mt-1 w-full border border-gray-700 bg-gray-900 text-gray-100 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 outline-none">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-600">Time</label>
-          <input type="time" id="time" class="mt-1 w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+          <label class="block text-sm font-medium text-gray-400">Time</label>
+          <input type="time" id="time" class="mt-1 w-full border border-gray-700 bg-gray-900 text-gray-100 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 outline-none">
         </div>
       </form>
       <div class="mt-4 flex gap-2">
         <button id="saveBtn" class="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition">Save</button>
-        <button id="cancelBtn" class="px-4 py-2 bg-gray-200 rounded-xl hover:bg-gray-300 transition">Cancel</button>
+        <button id="cancelBtn" class="px-4 py-2 bg-gray-700 text-white rounded-xl hover:bg-gray-600 transition">Cancel</button>
       </div>
     </div>
 
@@ -69,7 +69,7 @@
     function renderAppointments() {
       cardsContainer.innerHTML = "";
       if (appointments.length === 0) {
-        cardsContainer.innerHTML = `<div class="text-center text-gray-500 bg-white py-8 rounded-2xl shadow">No appointments yet</div>`;
+        cardsContainer.innerHTML = `<div class="text-center text-gray-400 bg-gray-800 py-8 rounded-2xl shadow">No appointments yet</div>`;
         return;
       }
 
@@ -82,24 +82,24 @@
         const timeLeft = diff <= 0 ? "Started / Passed" : formatTimeLeft(diff);
 
         const card = document.createElement("div");
-        card.className = "bg-white rounded-2xl shadow p-4 flex justify-between items-start hover:shadow-lg transition";
+        card.className = "bg-gray-800 rounded-2xl shadow p-4 flex justify-between items-start hover:shadow-red-500/30 transition";
 
         card.innerHTML = `
           <div class="flex gap-4 items-center">
-            <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold text-lg">
+            <div class="w-12 h-12 bg-red-600 text-white rounded-full flex items-center justify-center font-semibold text-lg">
               ${app.name.slice(0,2).toUpperCase()}
             </div>
             <div>
-              <h2 class="text-lg font-semibold">${app.title}</h2>
-              <p class="text-sm text-gray-600">${app.name} • ${formatDate(app.date)} @ ${app.time}</p>
+              <h2 class="text-lg font-semibold text-red-300">${app.title}</h2>
+              <p class="text-sm text-gray-400">${app.name} • ${formatDate(app.date)} @ ${app.time}</p>
             </div>
           </div>
           <div class="text-right">
             <p class="text-sm text-gray-500">Time left</p>
-            <p class="font-semibold ${diff <= 0 ? 'text-green-500' : 'text-gray-800'}">${timeLeft}</p>
+            <p class="font-semibold ${diff <= 0 ? 'text-green-400' : 'text-gray-200'}">${timeLeft}</p>
             <div class="mt-2 flex gap-2 justify-end">
-              <button onclick="editAppointment('${app.id}')" class="px-3 py-1 border rounded-lg hover:bg-gray-100">Edit</button>
-              <button onclick="deleteAppointment('${app.id}')" class="px-3 py-1 border border-red-400 text-red-600 rounded-lg hover:bg-red-50">Delete</button>
+              <button onclick="editAppointment('${app.id}')" class="px-3 py-1 border border-gray-600 rounded-lg hover:bg-gray-700">Edit</button>
+              <button onclick="deleteAppointment('${app.id}')" class="px-3 py-1 border border-red-500 text-red-400 rounded-lg hover:bg-red-700/30">Delete</button>
             </div>
           </div>
         `;
@@ -185,7 +185,6 @@
       }
     }
 
-    // Export appointments
     exportBtn.addEventListener("click", () => {
       const dataStr = JSON.stringify(appointments, null, 2);
       const blob = new Blob([dataStr], { type: "application/json" });
@@ -197,7 +196,6 @@
       URL.revokeObjectURL(url);
     });
 
-    // Import appointments
     importInput.addEventListener("change", event => {
       const file = event.target.files[0];
       if (!file) return;
