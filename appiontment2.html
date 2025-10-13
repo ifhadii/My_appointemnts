@@ -7,17 +7,12 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen">
-
-  <div class="max-w-4xl mx-auto p-6">
+  <div class="max-w-6xl mx-auto p-6">
     <header class="flex flex-wrap items-center justify-between mb-6 gap-3">
       <h1 class="text-3xl font-semibold text-red-400 drop-shadow">My Appointments</h1>
       <div class="flex gap-2 flex-wrap">
-        <button id="addBtn" class="px-4 py-2 bg-red-600 text-white rounded-xl shadow hover:bg-red-700 transition">
-          + Add
-        </button>
-        <button id="exportBtn" class="px-4 py-2 bg-green-600 text-white rounded-xl shadow hover:bg-green-700 transition">
-          Export
-        </button>
+        <button id="addBtn" class="px-4 py-2 bg-red-600 text-white rounded-xl shadow hover:bg-red-700 transition">+ Add</button>
+        <button id="exportBtn" class="px-4 py-2 bg-green-600 text-white rounded-xl shadow hover:bg-green-700 transition">Export</button>
         <label class="px-4 py-2 bg-gray-800 rounded-xl shadow hover:bg-gray-700 transition cursor-pointer">
           Import
           <input type="file" id="importInput" class="hidden" accept=".json" />
@@ -50,177 +45,247 @@
       </div>
     </div>
 
-    <div id="cardsContainer" class="grid gap-4"></div>
+    <div id="cardsContainer" class="grid gap-4 mb-10"></div>
+
+    <!-- Calendar Section -->
+    <section>
+      <h2 class="text-2xl font-semibold text-red-400 mb-4">Calendar</h2>
+      <div id="calendarContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </section>
   </div>
 
-  <script>
-    const formContainer = document.getElementById("formContainer");
-    const appointmentForm = document.getElementById("appointmentForm");
-    const cardsContainer = document.getElementById("cardsContainer");
-    const addBtn = document.getElementById("addBtn");
-    const saveBtn = document.getElementById("saveBtn");
-    const cancelBtn = document.getElementById("cancelBtn");
-    const exportBtn = document.getElementById("exportBtn");
-    const importInput = document.getElementById("importInput");
+<script>
+  const formContainer = document.getElementById("formContainer");
+  const appointmentForm = document.getElementById("appointmentForm");
+  const cardsContainer = document.getElementById("cardsContainer");
+  const addBtn = document.getElementById("addBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const cancelBtn = document.getElementById("cancelBtn");
+  const exportBtn = document.getElementById("exportBtn");
+  const importInput = document.getElementById("importInput");
+  const calendarContainer = document.getElementById("calendarContainer");
 
-    let appointments = JSON.parse(localStorage.getItem("appointments_v1") || "[]");
-    let editingId = null;
+  let appointments = JSON.parse(localStorage.getItem("appointments_v1") || "[]");
+  let editingId = null;
 
-    function renderAppointments() {
-      cardsContainer.innerHTML = "";
-      if (appointments.length === 0) {
-        cardsContainer.innerHTML = `<div class="text-center text-gray-400 bg-gray-800 py-8 rounded-2xl shadow">No appointments yet</div>`;
-        return;
+  function renderAppointments() {
+    cardsContainer.innerHTML = "";
+    if (appointments.length === 0) {
+      cardsContainer.innerHTML = `<div class="text-center text-gray-400 bg-gray-800 py-8 rounded-2xl shadow">No appointments yet</div>`;
+      renderCalendar();
+      return;
+    }
+
+    appointments.sort((a, b) => new Date(a.date + "T" + a.time) - new Date(b.date + "T" + b.time));
+    const now = new Date();
+
+    appointments.forEach(app => {
+      const target = new Date(app.date + "T" + app.time);
+      const diff = target - now;
+      const timeLeft = diff <= 0 ? "Started / Passed" : formatTimeLeft(diff);
+
+      const card = document.createElement("div");
+      card.className = "bg-gray-800 rounded-2xl shadow p-4 flex justify-between items-start hover:shadow-red-500/30 transition";
+
+      card.innerHTML = `
+        <div class="flex gap-4 items-center">
+          <div class="w-12 h-12 bg-red-600 text-white rounded-full flex items-center justify-center font-semibold text-lg">
+            ${app.name.slice(0,2).toUpperCase()}
+          </div>
+          <div>
+            <h2 class="text-lg font-semibold text-red-300">${app.title}</h2>
+            <p class="text-sm text-gray-400">${app.name} • ${formatDate(app.date)} @ ${app.time}</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <p class="text-sm text-gray-500">Time left</p>
+          <p class="font-semibold ${diff <= 0 ? 'text-green-400' : 'text-gray-200'}">${timeLeft}</p>
+          <div class="mt-2 flex gap-2 justify-end">
+            <button onclick="editAppointment('${app.id}')" class="px-3 py-1 border border-gray-600 rounded-lg hover:bg-gray-700">Edit</button>
+            <button onclick="deleteAppointment('${app.id}')" class="px-3 py-1 border border-red-500 text-red-400 rounded-lg hover:bg-red-700/30">Delete</button>
+          </div>
+        </div>
+      `;
+      cardsContainer.appendChild(card);
+    });
+
+    renderCalendar();
+  }
+
+  function renderCalendar() {
+    calendarContainer.innerHTML = "";
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
+
+    const appointmentMap = {};
+    appointments.forEach(app => {
+      if (!appointmentMap[app.date]) appointmentMap[app.date] = [];
+      appointmentMap[app.date].push(app);
+    });
+
+    for (let month = 0; month < 12; month++) {
+      const monthStart = new Date(currentYear, month, 1);
+      const monthName = monthStart.toLocaleString("default", { month: "long" });
+      const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
+      const firstDay = monthStart.getDay();
+
+      // hide past months
+      if (month < currentMonth) continue;
+
+      const monthDiv = document.createElement("div");
+      monthDiv.className = "bg-gray-800 rounded-2xl shadow p-4 relative";
+
+      let html = `<h3 class="text-lg font-semibold text-red-300 mb-2 text-center">${monthName} ${currentYear}</h3>`;
+      html += `<div class="grid grid-cols-7 text-center text-gray-400 text-sm mb-1">
+                <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+               </div>`;
+      html += `<div class="grid grid-cols-7 text-center gap-1">`;
+
+      for (let i = 0; i < firstDay; i++) html += `<div></div>`;
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${currentYear}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+        const hasAppointment = appointmentMap[dateStr];
+
+        if (hasAppointment) {
+          html += `
+            <div class="relative group cursor-pointer py-1 rounded-full bg-red-600 text-white font-semibold transition">
+              ${day}
+              <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-sm text-gray-200 border border-gray-700 rounded-lg p-2 w-48 z-50 shadow-lg">
+                ${hasAppointment.map(a => `
+                  <div class="mb-1">
+                    <p class="text-red-400 font-semibold">${a.title}</p>
+                    <p class="text-xs text-gray-400">${a.name}</p>
+                    <p class="text-xs">${a.time}</p>
+                  </div>
+                `).join("")}
+              </div>
+            </div>`;
+        } else {
+          html += `<div class="py-1 rounded-full hover:bg-gray-700 transition">${day}</div>`;
+        }
       }
 
-      appointments.sort((a, b) => new Date(a.date + "T" + a.time) - new Date(b.date + "T" + b.time));
-      const now = new Date();
-
-      appointments.forEach(app => {
-        const target = new Date(app.date + "T" + app.time);
-        const diff = target - now;
-        const timeLeft = diff <= 0 ? "Started / Passed" : formatTimeLeft(diff);
-
-        const card = document.createElement("div");
-        card.className = "bg-gray-800 rounded-2xl shadow p-4 flex justify-between items-start hover:shadow-red-500/30 transition";
-
-        card.innerHTML = `
-          <div class="flex gap-4 items-center">
-            <div class="w-12 h-12 bg-red-600 text-white rounded-full flex items-center justify-center font-semibold text-lg">
-              ${app.name.slice(0,2).toUpperCase()}
-            </div>
-            <div>
-              <h2 class="text-lg font-semibold text-red-300">${app.title}</h2>
-              <p class="text-sm text-gray-400">${app.name} • ${formatDate(app.date)} @ ${app.time}</p>
-            </div>
-          </div>
-          <div class="text-right">
-            <p class="text-sm text-gray-500">Time left</p>
-            <p class="font-semibold ${diff <= 0 ? 'text-green-400' : 'text-gray-200'}">${timeLeft}</p>
-            <div class="mt-2 flex gap-2 justify-end">
-              <button onclick="editAppointment('${app.id}')" class="px-3 py-1 border border-gray-600 rounded-lg hover:bg-gray-700">Edit</button>
-              <button onclick="deleteAppointment('${app.id}')" class="px-3 py-1 border border-red-500 text-red-400 rounded-lg hover:bg-red-700/30">Delete</button>
-            </div>
-          </div>
-        `;
-
-        cardsContainer.appendChild(card);
-      });
+      html += `</div>`;
+      monthDiv.innerHTML = html;
+      calendarContainer.appendChild(monthDiv);
     }
+  }
 
-    function formatTimeLeft(ms) {
-      let s = Math.floor(ms / 1000);
-      const d = Math.floor(s / 86400); s %= 86400;
-      const h = Math.floor(s / 3600); s %= 3600;
-      const m = Math.floor(s / 60); s %= 60;
-      const parts = [];
-      if (d) parts.push(d + "d");
-      if (h) parts.push(h + "h");
-      if (m) parts.push(m + "m");
-      parts.push(s + "s");
-      return parts.join(" ");
-    }
+  function formatTimeLeft(ms) {
+    let s = Math.floor(ms / 1000);
+    const d = Math.floor(s / 86400); s %= 86400;
+    const h = Math.floor(s / 3600); s %= 3600;
+    const m = Math.floor(s / 60); s %= 60;
+    const parts = [];
+    if (d) parts.push(d + "d");
+    if (h) parts.push(h + "h");
+    if (m) parts.push(m + "m");
+    parts.push(s + "s");
+    return parts.join(" ");
+  }
 
-    function formatDate(dateStr) {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "short", day: "numeric" });
-    }
+  function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "short", day: "numeric" });
+  }
 
-    function openForm(editing = false, app = {}) {
-      formContainer.classList.remove("hidden");
-      if (editing) {
-        document.getElementById("name").value = app.name;
-        document.getElementById("title").value = app.title;
-        document.getElementById("date").value = app.date;
-        document.getElementById("time").value = app.time;
-        editingId = app.id;
-      } else {
-        appointmentForm.reset();
-        editingId = null;
-      }
-    }
-
-    function closeForm() {
-      formContainer.classList.add("hidden");
+  function openForm(editing = false, app = {}) {
+    formContainer.classList.remove("hidden");
+    if (editing) {
+      document.getElementById("name").value = app.name;
+      document.getElementById("title").value = app.title;
+      document.getElementById("date").value = app.date;
+      document.getElementById("time").value = app.time;
+      editingId = app.id;
+    } else {
       appointmentForm.reset();
       editingId = null;
     }
+  }
 
-    addBtn.addEventListener("click", () => openForm(false));
-    cancelBtn.addEventListener("click", closeForm);
+  function closeForm() {
+    formContainer.classList.add("hidden");
+    appointmentForm.reset();
+    editingId = null;
+  }
 
-    saveBtn.addEventListener("click", () => {
-      const name = document.getElementById("name").value.trim();
-      const title = document.getElementById("title").value.trim();
-      const date = document.getElementById("date").value;
-      const time = document.getElementById("time").value;
+  addBtn.addEventListener("click", () => openForm(false));
+  cancelBtn.addEventListener("click", closeForm);
 
-      if (!name || !title || !date || !time) {
-        alert("Please fill all fields.");
-        return;
-      }
+  saveBtn.addEventListener("click", () => {
+    const name = document.getElementById("name").value.trim();
+    const title = document.getElementById("title").value.trim();
+    const date = document.getElementById("date").value;
+    const time = document.getElementById("time").value;
 
-      if (editingId) {
-        const idx = appointments.findIndex(a => a.id === editingId);
-        appointments[idx] = { id: editingId, name, title, date, time };
-      } else {
-        appointments.push({ id: Date.now().toString(), name, title, date, time });
-      }
-
-      localStorage.setItem("appointments_v1", JSON.stringify(appointments));
-      closeForm();
-      renderAppointments();
-    });
-
-    function editAppointment(id) {
-      const app = appointments.find(a => a.id === id);
-      if (app) openForm(true, app);
+    if (!name || !title || !date || !time) {
+      alert("Please fill all fields.");
+      return;
     }
 
-    function deleteAppointment(id) {
-      if (confirm("Delete this appointment?")) {
-        appointments = appointments.filter(a => a.id !== id);
-        localStorage.setItem("appointments_v1", JSON.stringify(appointments));
-        renderAppointments();
-      }
+    if (editingId) {
+      const idx = appointments.findIndex(a => a.id === editingId);
+      appointments[idx] = { id: editingId, name, title, date, time };
+    } else {
+      appointments.push({ id: Date.now().toString(), name, title, date, time });
     }
 
-    exportBtn.addEventListener("click", () => {
-      const dataStr = JSON.stringify(appointments, null, 2);
-      const blob = new Blob([dataStr], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "appointments_backup.json";
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    importInput.addEventListener("change", event => {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        try {
-          const data = JSON.parse(e.target.result);
-          if (Array.isArray(data)) {
-            appointments = data;
-            localStorage.setItem("appointments_v1", JSON.stringify(appointments));
-            renderAppointments();
-            alert("Appointments imported successfully!");
-          } else {
-            alert("Invalid file format.");
-          }
-        } catch {
-          alert("Error reading file.");
-        }
-      };
-      reader.readAsText(file);
-      event.target.value = "";
-    });
-
+    localStorage.setItem("appointments_v1", JSON.stringify(appointments));
+    closeForm();
     renderAppointments();
-    setInterval(renderAppointments, 1000);
-  </script>
+  });
+
+  function editAppointment(id) {
+    const app = appointments.find(a => a.id === id);
+    if (app) openForm(true, app);
+  }
+
+  function deleteAppointment(id) {
+    if (confirm("Delete this appointment?")) {
+      appointments = appointments.filter(a => a.id !== id);
+      localStorage.setItem("appointments_v1", JSON.stringify(appointments));
+      renderAppointments();
+    }
+  }
+
+  exportBtn.addEventListener("click", () => {
+    const dataStr = JSON.stringify(appointments, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "appointments_backup.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  importInput.addEventListener("change", event => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (Array.isArray(data)) {
+          appointments = data;
+          localStorage.setItem("appointments_v1", JSON.stringify(appointments));
+          renderAppointments();
+          alert("Appointments imported successfully!");
+        } else {
+          alert("Invalid file format.");
+        }
+      } catch {
+        alert("Error reading file.");
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = "";
+  });
+
+  renderAppointments();
+  setInterval(renderAppointments, 1000);
+</script>
+
 </body>
 </html>
