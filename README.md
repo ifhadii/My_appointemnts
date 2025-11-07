@@ -1,6 +1,6 @@
 🗓️ My Appointment Manager
 
-My Appointments is a simple and interactive web app that helps users organize and track their upcoming meetings or personal appointments in one place.
+My Appointments Manager is a simple and interactive web app that helps users organize and track their upcoming meetings or personal appointments in one place.
 
 The app allows users to easily add new appointments, edit or delete existing ones, and automatically displays how much time is left until each event starts. It also includes a built-in calendar view that visually highlights days with scheduled appointments.
 
