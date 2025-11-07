@@ -1,4 +1,4 @@
-🗓️ My Appointments
+🗓️ My Appointment Manager
 
 My Appointments is a simple and interactive web app that helps users organize and track their upcoming meetings or personal appointments in one place.
 
